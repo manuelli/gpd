@@ -332,15 +332,15 @@ gpd::GraspConfig GraspDetectionNode::convertToGraspMsg(const Grasp& hand)
   return msg;
 }
 
-Grasp GraspDetectorNode::createFingerHandFromMsg(const gpd::FingerHand& msg){
+FingerHand GraspDetectionNode::createFingerHandFromMsg(const gpd::FingerHand& msg){
   FingerHand finger_hand(msg.finger_width, msg.hand_outer_diameter, msg.hand_depth);
 
   // set all the properties of the finger hand
   finger_hand.setForwardAxis(msg.forward_axis);
-  finger_hand.setLateraAxis(msg.lateral_axis);
+  finger_hand.setLateralAxis(msg.lateral_axis);
   finger_hand.setBottom(msg.bottom);
   finger_hand.setCenter(msg.center);
-  finger_hand.setLet(msg.left);
+  finger_hand.setLeft(msg.left);
   finger_hand.setRight(msg.right);
   finger_hand.setSurface(msg.surface);
   finger_hand.setTop(msg.top);
@@ -349,15 +349,14 @@ Grasp GraspDetectorNode::createFingerHandFromMsg(const gpd::FingerHand& msg){
 }
 
 
-Grasp GraspDetectorNode::createGraspFromGraspMsg(const gpd::GraspMsg& msg){
+Grasp GraspDetectionNode::createGraspFromGraspMsg(const gpd::GraspMsg& msg){
 
   FingerHand finger_hand = this->createFingerHandFromMsg(msg.finger_hand);
 
   // set all the properties of the finger hand
   Eigen::Vector3d sample(msg.pose.position.x , msg.pose.position.y, msg.pose.position.z);
-  auto & quatMsg = msg.pose.orientation;
-  Eigen::Quaternion quaternion(quatMsg.w, quatMsg.x, quatMsg.y, quatMsg.z);
-  Eigen::Matrix3d rotMatrix = quaternion.toRotationMatrix()
+  Eigen::Quaternion<double> quaternion(msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z);
+  Eigen::Matrix3d rotMatrix = quaternion.toRotationMatrix();
   Grasp grasp(sample, rotMatrix, finger_hand);
   return grasp;
 
