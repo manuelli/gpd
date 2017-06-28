@@ -35,6 +35,8 @@
 // system
 #include <algorithm>
 #include <vector>
+#include <memory>
+
 
 // ROS
 #include <eigen_conversions/eigen_msg.h>
@@ -114,6 +116,12 @@ public:
   */
   std::vector<Grasp> detectGraspPosesInTopic();
 
+  /**
+   * \brief Detect grasp poses in a point cloud received from a ROS topic.
+   * \return the list of grasp poses
+  */
+  std::vector<Grasp> detectGraspPosesInTopicWithCandidateGrasps(std::vector<GraspSet>& graspSetList);
+
 
 private:
 
@@ -176,6 +184,8 @@ private:
 
   Grasp createGraspFromGraspMsg(const gpd::GraspMsg& msg);
 
+  std::shared_ptr<std::vector<GraspSet>> createGraspSetList(std::vector<Grasp> & graspVec);
+
   visualization_msgs::MarkerArray convertToVisualGraspMsg(const std::vector<Grasp>& hands, double outer_diameter,
     double hand_depth, double finger_width, double hand_height, const std::string& frame_id);
 
@@ -191,6 +201,7 @@ private:
 
   CloudCamera* cloud_camera_; ///< stores point cloud with (optional) camera information and surface normals
 
+  int cloud_type_; ///< the type of the cloud
   int size_left_cloud_; ///< (input) size of the left point cloud (when using two point clouds as input)
   bool has_cloud_, has_normals_, has_samples_; ///< status variables for received (input) messages
   std::string frame_; ///< point cloud frame
@@ -209,6 +220,7 @@ private:
   bool use_rviz_; ///< if rviz is used for visualization instead of PCL
   int num_selected_; ///< number of selected highest-scoring grasp clusters
   std::vector<double> workspace_; ///< workspace limits
+  std::shared_ptr<std::vector<GraspSet>> graspSetVec;
 
   GraspDetector* grasp_detector_; ///< used to run the grasp pose detection
   SequentialImportanceSampling* importance_sampling_; ///< sequential importance sampling variation of grasp pose detection

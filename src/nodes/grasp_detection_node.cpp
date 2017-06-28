@@ -29,8 +29,7 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
   grasp_detector_ = new GraspDetector(node);
 
   // Read input cloud and sample ROS topics parameters.
-  int cloud_type;
-  node.param("cloud_type", cloud_type, POINT_CLOUD_2);
+  node.param("cloud_type", cloud_type_, POINT_CLOUD_2);
   std::string cloud_topic;
   node.param("cloud_topic", cloud_topic, std::string("/camera/depth_registered/points"));
   std::string samples_topic;
@@ -49,18 +48,20 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
   }
 
   // subscribe to input point cloud ROS topic
-  if (cloud_type == POINT_CLOUD_2)
+  if (cloud_type_ == POINT_CLOUD_2)
     cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_callback, this);
-  else if (cloud_type == CLOUD_INDEXED)
+  else if (cloud_type_ == CLOUD_INDEXED)
     cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_indexed_callback, this);
-  else if (cloud_type == CLOUD_SAMPLES)
+  else if (cloud_type_ == CLOUD_SAMPLES)
   {
     cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_samples_callback, this);
     //    grasp_detector_->setUseIncomingSamples(true);
     has_samples_ = false;
   }
-  else if (cloud_type == CLOUD_GRASPS)
+  else if (cloud_type_ == CLOUD_GRASPS)
   {
+    std::cout << "using CLOUD_GRASPS callback" << std::endl;
+    std::cout << "cloud_topic = " << cloud_topic << std::endl;
     cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_grasps_callback, this);
     //    grasp_detector_->setUseIncomingSamples(true);
     has_samples_ = false;
@@ -89,14 +90,25 @@ void GraspDetectionNode::run()
   {
     if (has_cloud_)
     {
+      std::vector<Grasp> grasps;
       // detect grasps in point cloud
-      std::vector<Grasp> grasps = detectGraspPosesInTopic();
+      if (cloud_type_ == CLOUD_GRASPS){
+        std::cout << "running detect graps for CLOUD_GRASPS " << std::endl;
+        grasps = detectGraspPosesInTopicWithCandidateGrasps(*this->graspSetVec);
+      } else{
+        grasps = detectGraspPosesInTopic();
+      }
+
 
       // visualize grasps in rviz
       if (use_rviz_)
       {
         grasps_rviz_pub_.publish(convertToVisualGraspMsg(grasps, 0.1, 0.06, 0.01, 0.02, frame_));
       }
+
+      gpd::GraspConfigList selected_grasps_msg = createGraspListMsg(grasps);
+      grasps_pub_.publish(selected_grasps_msg);
+
 
       // reset the system
       has_cloud_ = false;
@@ -138,6 +150,23 @@ std::vector<Grasp> GraspDetectionNode::detectGraspPosesInTopic()
   ROS_INFO_STREAM("Published " << selected_grasps_msg.grasps.size() << " highest-scoring grasps.");
 
   return grasps;
+}
+
+std::vector<Grasp> GraspDetectionNode::detectGraspPosesInTopicWithCandidateGrasps(std::vector<GraspSet>& candidateGrasps){
+
+  // preprocess the point cloud
+  grasp_detector_->preprocessPointCloud(*cloud_camera_);
+//
+//  Plot plotter;
+//  if (true)
+//  {
+//    plotter.plotFingers(candidateGrasps, cloud_camera_->getCloudProcessed(), "Candidate Grasps");
+//  }
+
+  // 3. Classify each grasp candidate. (Note: switch from a list of hypothesis sets to a list of grasp hypotheses)
+  std::vector<Grasp> valid_grasps = grasp_detector_->classifyGraspCandidates(*cloud_camera_, candidateGrasps);
+  ROS_INFO_STREAM("Predicted " << valid_grasps.size() << " valid grasps.");
+  return valid_grasps;
 }
 
 
@@ -233,7 +262,29 @@ void GraspDetectionNode::cloud_samples_callback(const gpd::CloudSamples& msg)
 
 void GraspDetectionNode::cloud_grasps_callback(const gpd::CloudGrasps& msg)
 {
-  int a = 0; // placeholder for now
+  if (!has_cloud_){
+    std::cout << "got a CloudGrasps message " << std::endl;
+    initCloudCamera(msg.cloud_sources);
+
+    // extract the candidate grasps from the message
+    std::vector<Grasp> graspVec;
+    for(int i = 0; i < msg.grasps.size(); i++){
+      graspVec.push_back(this->createGraspFromGraspMsg(msg.grasps[i]));
+    }
+
+    // debugging publishing
+    // Publish the selected grasps.
+//    gpd::GraspConfigList selected_grasps_msg = createGraspListMsg(graspVec);
+//    grasps_pub_.publish(selected_grasps_msg);
+//    grasps_rviz_pub_.publish(convertToVisualGraspMsg(graspVec, 0.1, 0.06, 0.01, 0.02, frame_));
+
+    this->graspSetVec = this->createGraspSetList(graspVec);
+
+    std::cout << "finished creating a graspSetVec from the message" << std::endl;
+    this->has_cloud_ = true;
+    this->has_samples_ = true;
+  }
+
 }
 
 
@@ -357,9 +408,28 @@ Grasp GraspDetectionNode::createGraspFromGraspMsg(const gpd::GraspMsg& msg){
   Eigen::Vector3d sample(msg.pose.position.x , msg.pose.position.y, msg.pose.position.z);
   Eigen::Quaternion<double> quaternion(msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z);
   Eigen::Matrix3d rotMatrix = quaternion.toRotationMatrix();
+  std::cout << "x-direction  = " << rotMatrix.col(0) << std::endl;
+  std::cout << "y-direction  = " << rotMatrix.col(1) << std::endl;
+  std::cout << "z-direction  = " << rotMatrix.col(2) << std::endl;
   Grasp grasp(sample, rotMatrix, finger_hand);
   return grasp;
+}
 
+std::shared_ptr<std::vector<GraspSet>> GraspDetectionNode::createGraspSetList(std::vector<Grasp>& graspVec) {
+  std::shared_ptr<std::vector<GraspSet>> graspSetList = std::make_shared<std::vector<GraspSet>>();
+
+  for(int i = 0; i < graspVec.size(); i++){
+    GraspSet graspSet;
+    std::vector<Grasp> singleGraspVec;
+    singleGraspVec.push_back(graspVec[i]);
+    graspSet.setHands(singleGraspVec);
+    Eigen::Array<bool, 1, Eigen::Dynamic> isValid(1,1);
+    isValid << true;
+    graspSet.setIsValid(isValid);
+    graspSetList->push_back(graspSet);
+  }
+
+  return graspSetList;
 }
 
 
