@@ -4,10 +4,12 @@
   <include file="$(find gpd)/launch/hand_geometry.launch">
     <arg name="node" value="detect_grasps" />
   </include>
-  
+
+  <param name="use_gpu" value="false" />
   <!-- Load classifier parameters -->  
   <include file="$(find gpd)/launch/caffe/classifier_15channels.launch">
     <arg name="node" value="detect_grasps" />
+    <param name="use_gpu" value="false" />
   </include>
   
 	<node name="detect_grasps" pkg="gpd" type="detect_grasps" output="screen">

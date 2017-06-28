@@ -55,10 +55,12 @@
 // this project (messages)
 #include <gpd/CloudIndexed.h>
 #include <gpd/CloudSamples.h>
+#include <gpd/CloudGrasps.h>
 #include <gpd/CloudSources.h>
 #include <gpd/GraspConfig.h>
 #include <gpd/GraspConfigList.h>
 #include <gpd/SamplesMsg.h>
+#include <gpd/GraspMsg.h>
 
 // this project (headers)
 #include "../gpd/grasp_detector.h"
@@ -143,6 +145,13 @@ private:
   void cloud_samples_callback(const gpd::CloudSamples& msg);
 
   /**
+   * \brief Callback function for the ROS topic that contains the input point cloud and grasp
+   * locations
+   * \param msg the incoming ROS message
+  */
+  void cloud_grasps_callback(const gpd::CloudGrasps& msg);
+
+  /**
    * \brief Initialize the <cloud_camera> object given a <cloud_sources> message.
    * \param msg the <cloud_sources> message
    */
@@ -162,6 +171,10 @@ private:
   gpd::GraspConfigList createGraspListMsg(const std::vector<Grasp>& hands);
 
   gpd::GraspConfig convertToGraspMsg(const Grasp& hand);
+
+  FingerHand createFingerHandFromMsg(const gpd::FingerHand& msg);
+
+  Grasp createGraspFromGraspMsg(const gpd::GraspMsg& msg);
 
   visualization_msgs::MarkerArray convertToVisualGraspMsg(const std::vector<Grasp>& hands, double outer_diameter,
     double hand_depth, double finger_width, double hand_height, const std::string& frame_id);
@@ -204,6 +217,8 @@ private:
   static const int POINT_CLOUD_2; ///< sensor_msgs/PointCloud2
   static const int CLOUD_INDEXED; ///< gpd/CloudIndexed
   static const int CLOUD_SAMPLES; ///< gpd/CloudSamples
+  static const int CLOUD_GRASPS; ///< gpd/CloudSamples
+
 };
 
 #endif /* GRASP_DETECTION_NODE_H_ */

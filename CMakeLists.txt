@@ -66,8 +66,9 @@ set(CMAKE_CXX_FLAGS "-DNDEBUG -O3 -fopenmp -flto -Wno-deprecated -Wenum-compare"
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(FILES CloudIndexed.msg CloudSamples.msg CloudSources.msg GraspConfig.msg GraspConfigList.msg 
-  SamplesMsg.msg)
+add_message_files(FILES CloudIndexed.msg CloudSamples.msg CloudSources.msg GraspConfig.msg GraspConfigList.msg FingerHand.msg
+  SamplesMsg.msg GraspMsg.msg
+        CloudGrasps.msg)
 
 ## Generate services in the 'srv' folder
 # add_service_files(

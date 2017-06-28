@@ -1,7 +1,7 @@
 <launch>
   
   <!-- Load hand geometry parameters -->  
-  <include file="$(find gpd)/launch/hand_geometry.launch">
+  <include file="$(find gpd)/launch/hand_geometry_lucas.launch">
     <arg name="node" value="classify_grasp_candidates" />
   </include>
   
@@ -14,11 +14,14 @@
     
     <!-- Where the point cloud is stored -->    
 
-    <param name="cloud_file_name" value="$(find gpd)/tutorials/krylon.pcd" />
+    <!--<param name="cloud_file_name" value="$(find gpd)/tutorials/krylon.pcd" />-->
+    <!--<param name="cloud_file_name" value="$(find gpd)/tutorials/table_mug.pcd" />-->
+    <param name="cloud_file_name" value="/home/local/ANT/manlucas/data/object-meshes/003_cracker_box/textured_005.pcd" />
+    <!--<param name="cloud_file_name" value="/home/local/ANT/manlucas/data/object-meshes/025_mug/textured_005.pcd" />-->
 
     <!-- Plotting parameters -->
     <param name="plot_normals" value="false" />
-    <param name="plot_samples" value="false" />    
+    <param name="plot_samples" value="true" />
     <param name="plot_candidates" value="true" />
     <param name="plot_filtered_grasps" value="false" />
     <param name="plot_valid_grasps" value="true" />
@@ -32,7 +35,7 @@
     <rosparam param="camera_position"> [0, 0, 0] </rosparam> <!-- The position of the camera -->
 
     <!-- General parameters -->
-    <param name="num_samples" value="10" /> <!-- The number of samples to draw from the point cloud -->
+    <param name="num_samples" value="50" /> <!-- The number of samples to draw from the point cloud -->
     <param name="num_threads" value="4" /> <!-- The number of CPU threads to be used -->
     
     <!-- Parameters for local grasp candidate search -->

@@ -5,6 +5,8 @@
 const int GraspDetectionNode::POINT_CLOUD_2 = 0; ///< sensor_msgs/PointCloud2
 const int GraspDetectionNode::CLOUD_INDEXED = 1; ///< cloud with indices
 const int GraspDetectionNode::CLOUD_SAMPLES = 2; ///< cloud with (x,y,z) samples
+const int GraspDetectionNode::CLOUD_GRASPS = 3; ///< cloud with (x,y,z) samples
+
 
 
 GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false), has_normals_(false),
@@ -54,6 +56,12 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
   else if (cloud_type == CLOUD_SAMPLES)
   {
     cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_samples_callback, this);
+    //    grasp_detector_->setUseIncomingSamples(true);
+    has_samples_ = false;
+  }
+  else if (cloud_type == CLOUD_GRASPS)
+  {
+    cloud_sub_ = node.subscribe(cloud_topic, 1, &GraspDetectionNode::cloud_grasps_callback, this);
     //    grasp_detector_->setUseIncomingSamples(true);
     has_samples_ = false;
   }
@@ -223,6 +231,11 @@ void GraspDetectionNode::cloud_samples_callback(const gpd::CloudSamples& msg)
   }
 }
 
+void GraspDetectionNode::cloud_grasps_callback(const gpd::CloudGrasps& msg)
+{
+  int a = 0; // placeholder for now
+}
+
 
 void GraspDetectionNode::samples_callback(const gpd::SamplesMsg& msg)
 {
@@ -318,6 +331,38 @@ gpd::GraspConfig GraspDetectionNode::convertToGraspMsg(const Grasp& hand)
 
   return msg;
 }
+
+Grasp GraspDetectorNode::createFingerHandFromMsg(const gpd::FingerHand& msg){
+  FingerHand finger_hand(msg.finger_width, msg.hand_outer_diameter, msg.hand_depth);
+
+  // set all the properties of the finger hand
+  finger_hand.setForwardAxis(msg.forward_axis);
+  finger_hand.setLateraAxis(msg.lateral_axis);
+  finger_hand.setBottom(msg.bottom);
+  finger_hand.setCenter(msg.center);
+  finger_hand.setLet(msg.left);
+  finger_hand.setRight(msg.right);
+  finger_hand.setSurface(msg.surface);
+  finger_hand.setTop(msg.top);
+
+  return finger_hand;
+}
+
+
+Grasp GraspDetectorNode::createGraspFromGraspMsg(const gpd::GraspMsg& msg){
+
+  FingerHand finger_hand = this->createFingerHandFromMsg(msg.finger_hand);
+
+  // set all the properties of the finger hand
+  Eigen::Vector3d sample(msg.pose.position.x , msg.pose.position.y, msg.pose.position.z);
+  auto & quatMsg = msg.pose.orientation;
+  Eigen::Quaternion quaternion(quatMsg.w, quatMsg.x, quatMsg.y, quatMsg.z);
+  Eigen::Matrix3d rotMatrix = quaternion.toRotationMatrix()
+  Grasp grasp(sample, rotMatrix, finger_hand);
+  return grasp;
+
+}
+
 
 
 visualization_msgs::MarkerArray GraspDetectionNode::convertToVisualGraspMsg(const std::vector<Grasp>& hands,

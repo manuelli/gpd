@@ -68,6 +68,10 @@ int main(int argc, char* argv[])
   bool use_importance_sampling;
   node.param("use_importance_sampling", use_importance_sampling, false);
 
+  std::cout << "----------cloud_cam.getSampleIndices().size() = " << cloud_cam.getSampleIndices().size() << std::endl;
+
+  std::cout << "----------cloud_cam.getSamples().size() = " << cloud_cam.getSamples().cols() << std::endl;
+
   if (use_importance_sampling)
   {
 //    cloud_camera.filterWorkspace(workspace_);
@@ -83,6 +87,8 @@ int main(int argc, char* argv[])
 
     // Preprocess the point cloud (voxelize, workspace, etc.).
     detector.preprocessPointCloud(cloud_cam);
+    std::cout << "----------cloud_cam_->sample_indices_.size() right before detectGrasps = " << cloud_cam.getSampleIndices().size() << std::endl;
+    std::cout << "----------cloud_cam.getSamples().size() = " << cloud_cam.getSamples().cols() << std::endl;
 
     // Detect grasps in the point cloud.
     std::vector<Grasp> grasps = detector.detectGrasps(cloud_cam);
