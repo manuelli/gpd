@@ -75,7 +75,12 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
   }
 
   // uses ROS topics to publish grasp candidates, antipodal grasps, and grasps after clustering
-  grasps_pub_ = node.advertise<gpd::GraspConfigList>("clustered_grasps", 10);
+  if (cloud_type_ == CLOUD_GRASPS){
+    grasps_pub_ = node.advertise<gpd::GraspConfigList>("clustered_grasps_lucas", 10);
+  } else{
+    grasps_pub_ = node.advertise<gpd::GraspConfigList>("clustered_grasps", 10);
+  }
+
 
   node.getParam("workspace", workspace_);
 }
@@ -93,7 +98,7 @@ void GraspDetectionNode::run()
       std::vector<Grasp> grasps;
       // detect grasps in point cloud
       if (cloud_type_ == CLOUD_GRASPS){
-        std::cout << "running detect graps for CLOUD_GRASPS " << std::endl;
+        std::cout << "running detect grasps for CLOUD_GRASPS " << std::endl;
         grasps = detectGraspPosesInTopicWithCandidateGrasps(*this->graspSetVec);
       } else{
         grasps = detectGraspPosesInTopic();
@@ -262,6 +267,7 @@ void GraspDetectionNode::cloud_samples_callback(const gpd::CloudSamples& msg)
 
 void GraspDetectionNode::cloud_grasps_callback(const gpd::CloudGrasps& msg)
 {
+  std::cout << "got a CloudGrasps message before if statement " << std::endl;
   if (!has_cloud_){
     std::cout << "got a CloudGrasps message " << std::endl;
     initCloudCamera(msg.cloud_sources);
@@ -269,7 +275,7 @@ void GraspDetectionNode::cloud_grasps_callback(const gpd::CloudGrasps& msg)
     // extract the candidate grasps from the message
     std::vector<Grasp> graspVec;
     for(int i = 0; i < msg.grasps.size(); i++){
-      graspVec.push_back(this->createGraspFromGraspMsg(msg.grasps[i]));
+      graspVec.push_back(this->createGraspFromGraspMsg2(msg.grasps[i]));
     }
 
     // debugging publishing
@@ -381,6 +387,11 @@ gpd::GraspConfig GraspDetectionNode::convertToGraspMsg(const Grasp& hand)
   msg.score.data = hand.getScore();
   tf::pointEigenToMsg(hand.getSample(), msg.sample);
 
+  msg.config1d_bottom = hand.getBottom();
+  msg.config1d_top = hand.getTop();
+  msg.config1d_center = hand.getCenter();
+  msg.config1d_left = hand.getLeft();
+  msg.config1d_right = hand.getRight();
   return msg;
 }
 
@@ -418,6 +429,51 @@ Grasp GraspDetectionNode::createGraspFromGraspMsg(const gpd::GraspMsg& msg){
   return grasp;
 }
 
+Grasp GraspDetectionNode::createGraspFromGraspMsg2(const gpd::GraspMsg& msg){
+
+  // copy finger hand as closely as possible
+  FingerHand finger_hand(msg.finger_hand.finger_width, msg.finger_hand.hand_outer_diameter, msg.finger_hand.hand_depth);
+  finger_hand.setForwardAxis(msg.finger_hand.forward_axis);
+  finger_hand.setLateralAxis(msg.finger_hand.lateral_axis);
+  finger_hand.setBottom(msg.grasp_config.config1d_bottom);
+  finger_hand.setCenter(msg.grasp_config.config1d_center);
+  finger_hand.setLeft(msg.grasp_config.config1d_left);
+  finger_hand.setRight(msg.grasp_config.config1d_right);
+//  finger_hand.setSurface(msg.grasp_config.config1d_surface);
+  finger_hand.setTop(msg.grasp_config.config1d_top);
+
+  // set all the properties of the finger hand
+  // create the Grasp object
+  Eigen::Matrix3d frame;
+  frame.col(0) << msg.grasp_config.approach.x, msg.grasp_config.approach.y, msg.grasp_config.approach.z;
+  frame.col(1) << msg.grasp_config.binormal.x, msg.grasp_config.binormal.y, msg.grasp_config.binormal.z;
+  frame.col(2) << msg.grasp_config.axis.x, msg.grasp_config.axis.y, msg.grasp_config.axis.z;
+
+  Eigen::Vector3d sample(msg.grasp_config.sample.x, msg.grasp_config.sample.y, msg.grasp_config.sample.z);
+
+  Grasp grasp(sample, frame, finger_hand);
+
+  Eigen::Vector3d grasp_bottom(msg.grasp_config.bottom.x, msg.grasp_config.bottom.y, msg.grasp_config.bottom.z);
+  grasp.setGraspBottom(grasp_bottom);
+
+  Eigen::Vector3d grasp_top(msg.grasp_config.top.x, msg.grasp_config.top.y, msg.grasp_config.top.z);
+  grasp.setGraspTop(grasp_top);
+
+  Eigen::Vector3d grasp_surface(msg.grasp_config.surface.x, msg.grasp_config.surface.y, msg.grasp_config.surface.z);
+  grasp.setGraspSurface(grasp_surface);
+
+
+//
+//  Eigen::Vector3d grasp_bottom(msg.bottom.x, msg.bottom.y, msg.bottom.z);
+//  Eigen::Vector3d grasp_bottom(msg.bottom.x, msg.bottom.y, msg.bottom.z);
+//  Eigen::Vector3d grasp_bottom(msg.bottom.x, msg.bottom.y, msg.bottom.z);
+//  Eigen::Vector3d grasp_bottom(msg.bottom.x, msg.bottom.y, msg.bottom.z);
+//  Eigen::Vector3d grasp_bottom(msg.bottom.x, msg.bottom.y, msg.bottom.z);
+//  grasp.setGraspBottom()
+
+  return grasp;
+}
+
 std::shared_ptr<std::vector<GraspSet>> GraspDetectionNode::createGraspSetList(std::vector<Grasp>& graspVec) {
   std::shared_ptr<std::vector<GraspSet>> graspSetList = std::make_shared<std::vector<GraspSet>>();
 
@@ -426,10 +482,17 @@ std::shared_ptr<std::vector<GraspSet>> GraspDetectionNode::createGraspSetList(st
     std::vector<Grasp> singleGraspVec;
     singleGraspVec.push_back(graspVec[i]);
     graspSet.setHands(singleGraspVec);
-    Eigen::Array<bool, 1, Eigen::Dynamic> isValid(1,1);
-    isValid << true;
+    Eigen::Array<bool, 1, Eigen::Dynamic> isValid(1);
+    isValid(0,0) = true;
+//    Eigen::Vector<bool> isValid(1);
+//    isValid << true;
+    std::cout << "isValid " << isValid << std::endl;
     graspSet.setIsValid(isValid);
+    std::cout << "graspSet.getIsValid " << graspSet.getIsValid() << std::endl;
+    std::cout << "graspSet.getHypotheses.size() " << graspSet.getHypotheses().size() << std::endl;
+    graspSet.setSample(graspVec[i].getSample());
     graspSetList->push_back(graspSet);
+
   }
 
   return graspSetList;

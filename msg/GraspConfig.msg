@@ -17,3 +17,9 @@ geometry_msgs/Point sample # Point at which the grasp was found
 std_msgs/Float32 width # Required aperture (opening width) of the robot hand 
 
 std_msgs/Float32 score # Score assigned to the grasp by the classifier
+
+float64 config1d_bottom
+float64 config1d_top
+float64 config1d_center
+float64 config1d_left
+float64 config1d_right

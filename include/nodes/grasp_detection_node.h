@@ -184,6 +184,8 @@ private:
 
   Grasp createGraspFromGraspMsg(const gpd::GraspMsg& msg);
 
+  Grasp createGraspFromGraspMsg2(const gpd::GraspMsg& msg);
+
   std::shared_ptr<std::vector<GraspSet>> createGraspSetList(std::vector<Grasp> & graspVec);
 
   visualization_msgs::MarkerArray convertToVisualGraspMsg(const std::vector<Grasp>& hands, double outer_diameter,

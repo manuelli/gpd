@@ -2,23 +2,23 @@
 
     <!-- Load hand geometry parameters -->
     <include file="$(find gpd)/launch/hand_geometry.launch">
-        <arg name="node" value="detect_grasps" />
+        <arg name="node" value="detect_grasps_2" />
     </include>
 
     <!-- Load classifier parameters -->
     <include file="$(find gpd)/launch/caffe/classifier_15channels.launch">
-        <arg name="node" value="detect_grasps" />
+        <arg name="node" value="detect_grasps_2" />
     </include>
 
-    <node name="detect_grasps_from_director_msg" pkg="gpd" type="detect_grasps" output="screen">
+    <node name="detect_grasps_2" pkg="gpd" type="detect_grasps" output="screen">
 
         <!-- If sequential importance sampling is used (default: false) -->
         <param name="use_importance_sampling" value="false" />
 
         <!--What type of point cloud is used and what ROS topic it comes from-->
 
-        <param name="cloud_type" value="0" /> <!-- 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples, CloudGrasps -->
-        <param name="cloud_topic" value='/cloud_pcd' />
+        <!--<param name="cloud_type" value="0" /> &lt;!&ndash; 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples, CloudGrasps &ndash;&gt;-->
+        <!--<param name="cloud_topic" value='/cloud_pcd' />-->
 
 
         <param name="cloud_type" value="3" /> <!-- 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples, 3:CloudGrasps -->

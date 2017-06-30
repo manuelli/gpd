@@ -96,15 +96,21 @@ std::vector<cv::Mat> Learning::createImages(const CloudCamera& cloud_cam,
     pcl::PointXYZRGBA sample_pcl;
     sample_pcl.getVector3fMap() = hand_set_list[i].getSample().cast<float>();
 
+    std::cout << "hand_set_list[i].getSample() " << hand_set_list[i].getSample() << std::endl;
+
     if (kdtree.radiusSearch(sample_pcl, radius, nn_indices, nn_dists) > 0)
     {
       nn_points_list[i] = point_list.slice(nn_indices);
       is_valid[i] = true;
+      std::cout << "image was valid " << std::endl;
     }
     else
     {
+      std::cout << "image was not valid " << std::endl;
       is_valid[i] = false;
     }
+
+    std::cout << "nn_indices.size() " << nn_indices.size();
   }
 
   std::cout << "time for computing " << nn_points_list.size() << " point neighborhoods with " << num_threads_ << " threads: " << omp_get_wtime() - t0_total << "s\n";
@@ -207,16 +213,22 @@ std::vector<cv::Mat> Learning::createImages15Channels(const std::vector<GraspSet
       Eigen::Matrix3Xd shadow = hand_set_list[i].calculateShadow4(nn_points_list[i], shadow_length);
 
       const std::vector<Grasp>& hands = hand_set_list[i].getHypotheses();
+      std::cout << "hands.size() = " << hands.size() << std::endl;
 
       for (int j = 0; j < hands.size(); j++)
       {
+
         if (hand_set_list[i].getIsValid()(j))
         {
+          std::cout << "hand_set_list[i]" << j << " is valid\n";
           const int idx = i * num_orientations_ + j;
           images[idx] = createImage15Channels(nn_points_list[i], shadow, hands[j]);
           num_images++;
         }
       }
+    }
+    else{
+      std::cout << "this grasp wasn't valid" << std::endl;
     }
   }
 
