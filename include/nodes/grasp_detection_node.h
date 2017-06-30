@@ -213,6 +213,7 @@ private:
   ros::Publisher grasps_rviz_pub_; ///< ROS publisher for grasps in rviz (visualization)
 
   bool use_importance_sampling_; ///< if importance sampling is used
+  bool use_alternate_grasp_msg_decoder_; ///< if importance sampling is used
   bool filter_grasps_; ///< if grasps are filtered on workspace and gripper aperture
   bool filter_half_antipodal_; ///< if half-antipodal grasps are filtered
   bool plot_filtered_grasps_; ///< if filtered grasps are plotted

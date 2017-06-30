@@ -37,6 +37,9 @@ GraspDetectionNode::GraspDetectionNode(ros::NodeHandle& node) : has_cloud_(false
   std::string rviz_topic;
   node.param("rviz_topic", rviz_topic, std::string(""));
 
+  //alternate grasp decoder if needed
+  node.param("use_alternate_grasp_msg_decoder", use_alternate_grasp_msg_decoder_, false);
+
   if (!rviz_topic.empty())
   {
     grasps_rviz_pub_ = node.advertise<visualization_msgs::MarkerArray>(rviz_topic, 1);
@@ -275,7 +278,14 @@ void GraspDetectionNode::cloud_grasps_callback(const gpd::CloudGrasps& msg)
     // extract the candidate grasps from the message
     std::vector<Grasp> graspVec;
     for(int i = 0; i < msg.grasps.size(); i++){
-      graspVec.push_back(this->createGraspFromGraspMsg2(msg.grasps[i]));
+      if (use_alternate_grasp_msg_decoder_){
+        std::cout << "using alternate grasp msg decoder" << std::endl;
+        graspVec.push_back(this->createGraspFromGraspMsg2(msg.grasps[i]));
+      }
+      else{
+        graspVec.push_back(this->createGraspFromGraspMsg(msg.grasps[i]));
+      }
+
     }
 
     // debugging publishing
@@ -417,6 +427,7 @@ FingerHand GraspDetectionNode::createFingerHandFromMsg(const gpd::FingerHand& ms
 Grasp GraspDetectionNode::createGraspFromGraspMsg(const gpd::GraspMsg& msg){
 
   FingerHand finger_hand = this->createFingerHandFromMsg(msg.finger_hand);
+  double grasp_width = msg.finger_hand.hand_outer_diameter; // I don't think this is actually used for anything
 
   // set all the properties of the finger hand
   Eigen::Vector3d sample(msg.pose.position.x , msg.pose.position.y, msg.pose.position.z);
@@ -425,7 +436,7 @@ Grasp GraspDetectionNode::createGraspFromGraspMsg(const gpd::GraspMsg& msg){
   std::cout << "x-direction  = " << rotMatrix.col(0) << std::endl;
   std::cout << "y-direction  = " << rotMatrix.col(1) << std::endl;
   std::cout << "z-direction  = " << rotMatrix.col(2) << std::endl;
-  Grasp grasp(sample, rotMatrix, finger_hand);
+  Grasp grasp(sample, rotMatrix, finger_hand, grasp_width);
   return grasp;
 }
 

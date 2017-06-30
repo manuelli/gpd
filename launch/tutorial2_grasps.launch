@@ -28,6 +28,8 @@
         <!-- Whether to use gpu in Caffe classifier -->
         <param name="use_gpu" value="false" />
 
+        <param name="use_alternate_grasp_msg_decoder" value="false" />
+
         <!-- (optional) The ROS topic that the samples come from (default: an empty string) -->
         <param name="samples_topic" value="" />
 
