@@ -164,9 +164,9 @@ std::vector<Grasp> GraspDetectionNode::detectGraspPosesInTopicWithCandidateGrasp
 //  }
 
   // 3. Classify each grasp candidate. (Note: switch from a list of hypothesis sets to a list of grasp hypotheses)
-  std::vector<Grasp> valid_grasps = grasp_detector_->classifyGraspCandidates(*cloud_camera_, candidateGrasps);
-  ROS_INFO_STREAM("Predicted " << valid_grasps.size() << " valid grasps.");
-  return valid_grasps;
+  std::vector<Grasp> grasps = grasp_detector_->classifyAllGraspCandidates(*cloud_camera_, candidateGrasps);
+  ROS_INFO_STREAM("Scored " << grasps.size() << " grasps.");
+  return grasps;
 }
 
 
@@ -283,6 +283,7 @@ void GraspDetectionNode::cloud_grasps_callback(const gpd::CloudGrasps& msg)
     std::cout << "finished creating a graspSetVec from the message" << std::endl;
     this->has_cloud_ = true;
     this->has_samples_ = true;
+    frame_ = msg.cloud_sources.cloud.header.frame_id;
   }
 
 }
@@ -395,6 +396,8 @@ FingerHand GraspDetectionNode::createFingerHandFromMsg(const gpd::FingerHand& ms
   finger_hand.setRight(msg.right);
   finger_hand.setSurface(msg.surface);
   finger_hand.setTop(msg.top);
+
+  // also need to set which finger placement we used
 
   return finger_hand;
 }

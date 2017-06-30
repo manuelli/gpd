@@ -10,20 +10,20 @@
         <arg name="node" value="detect_grasps" />
     </include>
 
-    <node name="detect_grasps" pkg="gpd" type="detect_grasps" output="screen">
+    <node name="detect_grasps_from_director_msg" pkg="gpd" type="detect_grasps" output="screen">
 
         <!-- If sequential importance sampling is used (default: false) -->
         <param name="use_importance_sampling" value="false" />
 
-         <!--What type of point cloud is used and what ROS topic it comes from-->
+        <!--What type of point cloud is used and what ROS topic it comes from-->
 
         <param name="cloud_type" value="0" /> <!-- 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples, CloudGrasps -->
         <param name="cloud_topic" value='/cloud_pcd' />
 
 
-        <!--<param name="cloud_type" value="3" /> &lt;!&ndash; 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples, 3:CloudGrasps &ndash;&gt;-->
+        <param name="cloud_type" value="3" /> <!-- 0: PointCloud2, 1: CloudIndexed, 2: CloudSamples, 3:CloudGrasps -->
 
-        <!--<param name="cloud_topic" value='/cloud_grasps' />-->
+        <param name="cloud_topic" value='/cloud_grasps' />
 
         <!-- Whether to use gpu in Caffe classifier -->
         <param name="use_gpu" value="false" />

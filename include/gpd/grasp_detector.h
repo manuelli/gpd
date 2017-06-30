@@ -156,6 +156,14 @@ public:
   std::vector<Grasp> classifyGraspCandidates(const CloudCamera& cloud_cam, std::vector<GraspSet>& candidates);
 
   /**
+   * \brief Classify grasp candidates as viable grasps or not.
+   * \param cloud_cam the point cloud
+   * \param candidates the grasp candidates to be classified
+   * \return the classified grasps, doesn't do any trimming
+   */
+  std::vector<Grasp> classifyAllGraspCandidates(const CloudCamera& cloud_cam, std::vector<GraspSet>& candidates);
+
+  /**
    * \brief Find clusters of grasps that are geometrically aligned.
    * \param grasps the grasps for which to search clusters
    * \return the grasps that are in clusters
