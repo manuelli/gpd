@@ -146,7 +146,7 @@ add_library(${PROJECT_NAME}_grasp_image_15_channels src/${PROJECT_NAME}/grasp_im
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(grasp_candidates_classifier ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(grasp_candidates_classifier ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare C++ executables
 add_executable(${PROJECT_NAME}_detect_grasps src/nodes/grasp_detection_node.cpp)
@@ -156,6 +156,8 @@ add_executable(${PROJECT_NAME}_create_training_data src/nodes/create_training_da
 add_executable(${PROJECT_NAME}_classify_candidates src/nodes/classify_candidates.cpp)
 add_executable(${PROJECT_NAME}_test_occlusion src/tests/test_occlusion.cpp)
 
+
+add_dependencies(${PROJECT_NAME}_detect_grasps ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
