@@ -337,6 +337,8 @@ void GraspDetectionNode::initCloudCamera(const gpd::CloudSources& msg)
     view_points.col(i) << msg.view_points[i].x, msg.view_points[i].y, msg.view_points[i].z;
   }
 
+  std::cout << "initCloudCamera::view_points = " << view_points << std::endl;
+
   // Set point cloud.
   if (msg.cloud.fields.size() == 6 && msg.cloud.fields[3].name == "normal_x"
     && msg.cloud.fields[4].name == "normal_y" && msg.cloud.fields[5].name == "normal_z")

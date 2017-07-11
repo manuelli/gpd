@@ -81,7 +81,9 @@ std::vector<cv::Mat> Learning::createImages(const CloudCamera& cloud_cam,
   // Set the radius for the neighborhood search to the largest image dimension.
   Eigen::Vector3d image_dims;
   image_dims << image_params_.depth_, image_params_.height_ / 2.0, image_params_.outer_diameter_;
-  double radius = image_dims.maxCoeff();
+//  double radius = image_dims.maxCoeff();
+
+  double radius = 0.5; // this ensures that even if sample is set to the hand origin, then we don't unecessarily crop out points and end up with empty pointclouds
 
   // 1. Find points within image dimensions.
   bool is_valid[hand_set_list.size()];
@@ -110,7 +112,7 @@ std::vector<cv::Mat> Learning::createImages(const CloudCamera& cloud_cam,
       is_valid[i] = false;
     }
 
-    std::cout << "nn_indices.size() " << nn_indices.size();
+    std::cout << "nn_indices.size() " << nn_indices.size() << std::endl;
   }
 
   std::cout << "time for computing " << nn_points_list.size() << " point neighborhoods with " << num_threads_ << " threads: " << omp_get_wtime() - t0_total << "s\n";
@@ -309,6 +311,7 @@ Matrix3XdPair Learning::transformToUnitImage(const PointList& point_list, const 
 
   // 2. Find points in unit image.
   std::vector<int> indices = findPointsInUnitImage(hand, points_normals.first);
+  std::cout << "number of points in unit image = " << indices.size() << std::endl;
   points_normals.first = transformPointsToUnitImage(hand, points_normals.first, indices);
   points_normals.second = EigenUtils::sliceMatrix(points_normals.second, indices);
 

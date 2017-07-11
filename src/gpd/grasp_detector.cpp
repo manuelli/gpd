@@ -511,6 +511,7 @@ void GraspDetector::extractGraspsAndImages(const std::vector<GraspSet>& hand_set
   grasps_out.resize(0);
   images_out.resize(0);
   int num_orientations = hand_set_list[0].getHypotheses().size();
+  std::cout << "num_orientations " << num_orientations << std::endl;
 
   for (int i = 0; i < hand_set_list.size(); i++)
   {
