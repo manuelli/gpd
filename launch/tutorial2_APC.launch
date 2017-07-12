@@ -45,7 +45,7 @@
         <param name="voxelize" value="true"/>
         <param name="remove_outliers" value="false"/>
         <rosparam param="workspace"> [-1, 1, -1, 1, -1, 1] </rosparam>
-        <rosparam param="camera_position"> [0, 0, -1] </rosparam>
+        <rosparam param="camera_position"> [0, 0, 1] </rosparam>
 
         <!-- General parameters -->
         <param name="num_samples" value="100" />
